@@ -1,39 +1,23 @@
 #data_path = "../temp_data/run272/"
 data_folder = "batch"
-ranges = [i for i in range(1,29)]
-symbols = ["ABC"]#, "DEF", "GHI"]
-freq = "10T"
+ranges = [i for i in range(0,1)]
+symbols = ["ABC"] #, "DEF", "GHI"]
 
 rule all:
   input:
-    expand([data_folder + "{no}/out/reduced_data/0_daily_close.png"], no = [i for i in ranges]),
-    expand([data_folder + "{no}/out/reduced_data/0_5T_price.png"], no = [i for i in ranges]),
-    expand([data_folder + "{no}/out/reduced_data/0_{symbol}_daily_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    expand([data_folder + "{no}/out/reduced_data/0_{symbol}_5T_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    expand([data_folder + "{no}/out/reduced_data/0_{symbol}_5T_agent_pos.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    expand([data_folder + "{no}/out/reduced_data/0_{symbol}_daily_agent_pl.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    expand([data_folder + "{no}/out/reduced_data/0_{symbol}_daily_agent_vol.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    expand([data_folder + "{no}/out/reduced_data/0_{symbol}_{quantile}q_volume_heatmap_{freq}.png"],
-          no = [i for i in ranges], symbol = symbols, freq = ["5T", "daily"], quantile=[0,1,20] )
-    #expand([data_path + data_folder + "reduced_data/{no}_daily_close.png"], no = [i for i in ranges]),
-    #expand([data_path + data_folder + "reduced_data/{no}_5T_price.png"], no = [i for i in ranges]),
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_daily_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_5T_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_5T_agent_pos.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_daily_agent_pl.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_daily_agent_vol.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_{quantile}q_volume_heatmap_{freq}.png"],
-    #      no = [i for i in ranges], symbol = ["ABC", "DEF", "GHI"], freq = ["5T", "daily"], quantile=[0,1,20] )
-    #expand([data_path + data_folder + "reduced_data/{no}_{symbol}_5T_agent_vol.csv.gz"], no = [i for i in ranges], symbol = symbols),
+    expand(["{no}_daily_close.png"], no = [i for i in ranges]),
+    expand(["{no}_5T_price.png"], no = [i for i in ranges]),
+    expand(["{no}_{symbol}_daily_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
+    expand(["{no}_{symbol}_5T_bars.csv.gz"], no = [i for i in ranges], symbol = symbols)
 
 
 
 no = 0
 rule make_bars:
     input:
-         "{path}/{symbol}_NYSE@{no}_Matching-MatchedOrders.csv.gz"
+         "{symbol}_NYSE@{no}_Matching-MatchedOrders.csv.gz"
     output:
-          "{path}/reduced_data/{no}_{symbol}_daily_bars.csv.gz"
+          "{no}_{symbol}_daily_bars.csv.gz"
     conda:
         "envs/deps.yaml"
     shell:
@@ -41,9 +25,9 @@ rule make_bars:
 
 rule make_intraday_bars:
     input:
-         "{path}/{symbol}_NYSE@{no}_Matching-MatchedOrders.csv.gz"
+         "{symbol}_NYSE@{no}_Matching-MatchedOrders.csv.gz"
     output:
-          "{path}/reduced_data/{no}_{symbol}_5T_bars.csv.gz"
+          "{no}_{symbol}_5T_bars.csv.gz"
     conda:
         "envs/deps.yaml"
     shell:
@@ -51,9 +35,9 @@ rule make_intraday_bars:
 
 rule plot_daily_bars:
     input:
-         expand(["{{path}}/reduced_data/{{no}}_{symbol}_daily_bars.csv.gz"], symbol = symbols)
+         expand(["{{no}}_{symbol}_daily_bars.csv.gz"], symbol = symbols)
     output:
-          "{path}/reduced_data/{no}_daily_close.png"
+          "{no}_daily_close.png"
     conda:
         "envs/deps.yaml"
     shell:
@@ -62,56 +46,52 @@ rule plot_daily_bars:
 
 rule plot_intraday_bars:
     input:
-         expand(["{{path}}/reduced_data/{{no}}_{symbol}_5T_bars.csv.gz"], symbol = symbols)
+         expand(["{{no}}_{symbol}_5T_bars.csv.gz"], symbol = symbols)
     output:
-          "{path}/reduced_data/{no}_5T_price.png"
+          "{no}_5T_price.png"
     conda:
         "envs/deps.yaml"
     shell:
          "python -m adp.plotting.plot_intraday_price  {output} {input}"
 
-rule make_agent_pos:
+rule make_daily_returns_auto_correlations:
     input:
-     "{path}/{symbol}_NYSE@{no}_Matching-agents.csv.gz"
+         expand(["{{no}}_{symbol}_daily_bars.csv.gz"], symbol = symbols)
     output:
-          "{path}/reduced_data/{no}_{symbol}_5T_agent_pos.csv.gz"
+          "{no}_{symbol}_daily_autocorr.csv.gz"
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_agent_stat {input} 5T Pos {output}"
+         "python -m adp.make_daily_returns_autocorrelation {output} {input} False"
 
-rule make_agent_pl:
+rule make_daily_abs_returns_auto_correlations:
     input:
-     "{path}/{symbol}_NYSE@{no}_Matching-agents.csv.gz"
+         expand(["{{no}}_{symbol}_daily_bars.csv.gz"], symbol = symbols)
     output:
-          "{path}/reduced_data/{no}_{symbol}_daily_agent_pl.csv.gz"
+          "{no}_{symbol}_daily_abs_autocorr.csv.gz"
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_agent_stat_daily {input} PL {output}"
+         "python -m adp.make_daily_returns_autocorrelation  {output} {input} True"
 
-rule make_agent_vol:
+rule make_daily_returns_qq_data:
     input:
-     "{path}/{symbol}_NYSE@{no}_Matching-agents.csv.gz"
+         expand(["{{no}}_{symbol}_daily_bars.csv.gz"], symbol = symbols)
     output:
-          "{path}/reduced_data/{no}_{symbol}_daily_agent_vol.csv.gz"
+          "{no}_{symbol}_daily_returns_qq.csv.gz"
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_agent_stat_daily {input} Vol {output}"
+         "python -m adp.make_returns_qq_data  {output} {input}"
 
-rule make_agent_vol_vol_network:
+rule make_intraday_returns_qq_data:
     input:
-         "{path}/{symbol}_NYSE@{no}_Matching-MatchedOrders.csv.gz",
-         "{path}/reduced_data/{no}_{symbol}_{freq}_bars.csv.gz"
+         expand(["{{no}}_{symbol}_5T_bars.csv.gz"], symbol = symbols)
     output:
-          #"{path}/reduced_data/{no}_{symbol}_{quantile}q_trading_table_{freq}.csv",
-          "{path}/reduced_data/{no}_{symbol}_{quantile}q_volume_heatmap_{freq}.png",
-          "{path}/reduced_data/{no}_{symbol}_{quantile}q_volume_heatmap_{freq}.csv"
+          "{no}_{symbol}_5T_returns_qq.csv.gz"
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_volatility_and_volume_analysis {input} {output} {wildcards.quantile}"
-
+         "python -m adp.make_returns_qq_data  {output} {input}"
 
 
