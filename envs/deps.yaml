@@ -4,12 +4,6 @@ dependencies:
   - pandas
   - matplotlib
   - pip
-  - networkx
-#  - nxviz
-#  - tqdm
-  - seaborn
+  - scipy
   - pip:
-      - git+https://github.com/mesalas/amme_data_processing.git
-#    - python-louvain
-#    - jenkspy
-#    - kneed
+      - git+https://github.com/mesalas/amme_data_processing.git@stylized_facts
