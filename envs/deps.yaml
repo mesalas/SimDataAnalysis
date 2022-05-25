@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+dependencies:
+  - pandas
+  - matplotlib
+  - pip
+  - networkx
+#  - nxviz
+#  - tqdm
+  - seaborn
+  - pip:
+      - git+https://github.com/mesalas/amme_data_processing.git
+#    - python-louvain
+#    - jenkspy
+#    - kneed
