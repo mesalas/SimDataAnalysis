@@ -8,8 +8,11 @@ rule all:
     expand(["{no}_daily_close.png"], no = [i for i in ranges]),
     expand(["{no}_5T_price.png"], no = [i for i in ranges]),
     expand(["{no}_{symbol}_daily_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
-    expand(["{no}_{symbol}_5T_bars.csv.gz"], no = [i for i in ranges], symbol = symbols)
-
+    expand(["{no}_{symbol}_5T_bars.csv.gz"], no = [i for i in ranges], symbol = symbols),
+    expand(["{no}_{symbol}_daily_autocorr.csv.gz"], no =[i for i in ranges], symbol = symbols),
+    expand(["{no}_{symbol}_daily_abs_autocorr.csv.gz"], no =[i for i in ranges], symbol = symbols),
+    expand(["{no}_{symbol}_daily_returns_qq.csv.gz"], no =[i for i in ranges], symbol = symbols),
+    expand(["{no}_{symbol}_5T_returns_qq.csv.gz"], no =[i for i in ranges], symbol = symbols)
 
 
 no = 0
@@ -62,7 +65,7 @@ rule make_daily_returns_auto_correlations:
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_daily_returns_autocorrelation {output} {input} False"
+         "python -m adp.make_daily_returns_autocorrelation  {input} {output} False"
 
 rule make_daily_abs_returns_auto_correlations:
     input:
@@ -72,7 +75,7 @@ rule make_daily_abs_returns_auto_correlations:
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_daily_returns_autocorrelation  {output} {input} True"
+         "python -m adp.make_daily_returns_autocorrelation {input} {output} True"
 
 rule make_daily_returns_qq_data:
     input:
@@ -82,7 +85,7 @@ rule make_daily_returns_qq_data:
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_returns_qq_data  {output} {input}"
+         "python -m adp.make_returns_qq_data {input} {output}"
 
 rule make_intraday_returns_qq_data:
     input:
@@ -92,6 +95,6 @@ rule make_intraday_returns_qq_data:
     conda:
         "envs/deps.yaml"
     shell:
-         "python -m adp.make_returns_qq_data  {output} {input}"
+         "python -m adp.make_returns_qq_data  {input} {output}"
 
 
